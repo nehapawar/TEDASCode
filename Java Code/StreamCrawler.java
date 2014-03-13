@@ -1,7 +1,6 @@
 //package crawler;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,8 +11,12 @@ import twitter4j.FilterQuery;
 import twitter4j.StatusListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
-import twitter4j.conf.Configuration;
 
+
+
+/**************************************************************************
+ * StreamCrawler.java is the file from where the code flow begins
+ **************************************************************************/
 public class StreamCrawler implements Runnable {
 	private TwitterStream twitterStream;
 	private String track[];
@@ -28,7 +31,8 @@ public class StreamCrawler implements Runnable {
 		while((tmp = br.readLine())!=null){
 			configs.add(StringUtils.split(tmp, "=")[1]);
 		}
-		//StatusListener listener = new Listener("location/", "user/");
+		
+		//Set up the listener for tweets and add it to the twitter stream
 		StatusListener listener = new Listener(configs.get(0), configs.get(1));
 		this.track = track;
 		this.geo = geo;
@@ -37,9 +41,15 @@ public class StreamCrawler implements Runnable {
 		twitterStream.addListener(listener);
 	}
 
-	@Override
+
+	/**************************************************************************
+	 * 
+	 * This function sets up the filter query for TwitterStream 
+	 * with keywords and geo coordinates
+	 * 
+	 **************************************************************************/
 	public void run() {
-		// TODO Auto-generated method stub
+		
 		FilterQuery query = new FilterQuery();
 		// if you want to track geo, add this line/
 		if (useGeo)
@@ -47,22 +57,23 @@ public class StreamCrawler implements Runnable {
 		// if you want to track keywords, add this line.
 		else
 			query.track(track);
-		//query.setIncludeEntities(true);
+		
+		//Start filtering twitter real time stream according to the filters
 		twitterStream.filter(query);
-
-		// if you do not to focus on geo or keywords
-		// use twitterStream.sample(); instead of twitterStream.filter(query);
-
 	}
 
+	
+	/**************************************************************************
+	 * 
+	 * This is the entry point of the code
+	 * Takes in arguments
+	 * 	- keywords file
+	 * 	- no arguments
+	 * 
+	 **************************************************************************/
+	
 	public static void main(String[] args) throws IOException {
 
-		// for jar packing purposes, argument "chicago" tracks chicago
-		// otherwise use keywords file
-		if (args.length == 0) {
-			//System.out.println("Please enter filename or chicago");
-			
-		}
 		String[] track;
 
 		// bounding boxes are specified as a comma separate list of
@@ -70,16 +81,22 @@ public class StreamCrawler implements Runnable {
 		// corner of the box.
 		// For example locations=-122.75,36.8,-121.75,37.8 would track tweets
 		// from the San Francisco area.
-		// this champaign
+		// The below latitude longitude tracks chicago 
 		double chilat = 41.878114;
 		double chilong = -87.629798;
 		double[][] geo = { { chilong - .5, chilat - .5 },
 				{ chilong + .5, chilat + .5 } };
-		// double[][] geo = {{-122.75,36.8 }, {-121.75,37.8}};
+		
+		//Default operation - no keywords specified, just track bounding box of Chicago
 		if (args.length==0) {
+			//Create object of StreamCrawler with specified geo co-ordinates
 			StreamCrawler sc = new StreamCrawler(null, geo, true);
+			//Calling run method to start filtering tweets
 			sc.run();
-		} else {
+		}
+		//Keywords mode - filter tweets by keywords
+		else {
+			//Read keywords from file supplied as argument and store into arraylist
 			FileReader file = new FileReader(args[0]);
 			BufferedReader br = new BufferedReader(file);
 			ArrayList<String> kws = new ArrayList<String>();
@@ -98,7 +115,9 @@ public class StreamCrawler implements Runnable {
 				track[index] = word;
 				index++;
 			}
+			//Create object of StreamCrawler with keywords array
 			StreamCrawler sc = new StreamCrawler(track, geo, false);
+			//Calling run method to start filtering tweets
 			sc.run();
 		}
 	}
