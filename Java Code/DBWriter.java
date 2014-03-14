@@ -99,14 +99,20 @@ public class DBWriter {
 		if(tweetMaxes.first())
 		{
 			maxrt = tweetMaxes.getDouble("max(retweetCount)");
+			if (maxrt==0) maxrt=1;
 		}
 		if(userMaxes.first())
 		{
 			maxfavs = userMaxes.getDouble("max(favorites)");
+			if (maxfavs==0) maxfavs = 1;
 			maxfrnds = userMaxes.getDouble("max(friends)");
+			if (maxfrnds==0) maxfrnds=1;
 			maxsc = userMaxes.getDouble("max(statusCount)");
+			if (maxsc == 0) maxsc=1;
 			maxage = userMaxes.getDouble("max(accountAge)");
+			if (maxage==0) maxage=1;
 			maxfol = userMaxes.getDouble("max(followers)");
+			if (maxfol==0) maxfol=1;
 		}
 		maxTweetStmt.close();
 		maxUserStmt.close();
@@ -388,7 +394,6 @@ public class DBWriter {
 			pstmt.setDouble(9, loc[0]);
 			pstmt.setDouble(10, loc[1]);
 			pstmt.setString(11, u.getProfileImageURL().toString());
-			//System.out.println(u.getProfileImageURL().toString());
 			
 			pstmt.executeUpdate();
 			pstmt.close();
