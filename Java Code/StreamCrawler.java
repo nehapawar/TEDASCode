@@ -88,16 +88,17 @@ public class StreamCrawler implements Runnable {
 				{ chilong + .5, chilat + .5 } };
 		
 		//Default operation - no keywords specified, just track bounding box of Chicago
-		if (args.length==0) {
+		/*if (args.length==0) {
 			//Create object of StreamCrawler with specified geo co-ordinates
 			StreamCrawler sc = new StreamCrawler(null, geo, true);
 			//Calling run method to start filtering tweets
 			sc.run();
 		}
 		//Keywords mode - filter tweets by keywords
-		else {
+		else */
+		{
 			//Read keywords from file supplied as argument and store into arraylist
-			FileReader file = new FileReader(args[0]);
+			FileReader file = new FileReader("keywordsnew.txt");
 			BufferedReader br = new BufferedReader(file);
 			ArrayList<String> kws = new ArrayList<String>();
 			String kw;
