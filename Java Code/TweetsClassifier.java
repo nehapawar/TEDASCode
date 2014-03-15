@@ -12,12 +12,9 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
-/**
- * This class is for classifying tweets.
- * 
- * @author Tobias Garrick Lei
- * 
- */
+/***************************************************************************
+ * This class is for classifying tweets. 
+ ***************************************************************************/
 public class TweetsClassifier {
 	
 	private Classifier cls;
@@ -31,29 +28,44 @@ public class TweetsClassifier {
 	}
 
 
-
-	// Created for read-time classifying
+	/***********************************************************************
+	 * 
+	 * Initializes the correct classifier model
+	 * Created for read-time classifying
+	 * @param modelName
+	 *********************************************************************/
 	public void init(String modelName) {
 		try {
-			if (modelName.equals("combine")) {
+			//Ensemble
+			if (modelName.equals("combine")) 
+			{
 				clss = new ArrayList<Classifier>();
 				clss.add(loadModel("classifierData/models/testnb"));
 				clss.add(loadModel("classifierData/models/testdt"));
 				clss.add(loadModel("classifierData/models/testsvm"));
-			} else if (modelName.equals("nb")) {
-				//cls = loadModel(folderName + "_" + modelName);
+			}
+			//Naive Bayes
+			else if (modelName.equals("nb")) 
+			{
 				cls = loadModel("classifierData/models/testnb_2");
-			} else if (modelName.equals("svm")) {
-				//cls = loadModel(folderName + "_" + modelName);
+			}
+			//SVM
+			else if (modelName.equals("svm")) 
+			{
 				cls = loadModel("explorermodels/smo");
 				isSMO = true;
-			} else if (modelName.equals("dt")) {
-				//cls = loadModel(folderName + "_" + modelName);
-				//cls = loadModel("classifierData/models/testdt_2");
+			}
+			//Decision Tree
+			else if (modelName.equals("dt")) 
+			{
 				cls = loadModel("explorermodels/dt");
-			} else if (modelName.equals("nb_ns")){
+			}
+			else if (modelName.equals("nb_ns"))
+			{
 				cls = loadModel("classifierData/models/testnb_nonsocial");
-			} else {
+			} 
+			else 
+			{
 				System.out.println("[ERROR] Please choose the right model!");
 			}
 		} catch (Exception e) {
