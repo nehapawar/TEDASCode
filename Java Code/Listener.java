@@ -116,12 +116,11 @@ public class Listener implements StatusListener {
 		//Classify the tweet using the status, the recent tweets features, and the 
 		//similarity and nearby-tweets metrics calculated, with the help of an svm model
 		boolean social = cd.classify(status,rtf,"svm",numgps,sim);
-		double confidence = cd.getRecentConfidence();
+		
 		//Write the tweet information to a file called text_social/timestamp
 		writeTextAndData(status,social,rtf.getSocialFeatures(status));
 		
 		//If the classifier returns a positive
-		System.out.println("before if social.................");
 		if(social)
 		{
 			//Add the tweet to the recent tweets cache so that 
@@ -155,7 +154,7 @@ public class Listener implements StatusListener {
 			String category = ner.categorize(status.getText());
 			
 			//Add tweet information to the tables "tweets" and "rankings"
-			dbw.addTweet(status, nerloc,regaddr,category,confidence);
+			dbw.addTweet(status, nerloc,regaddr,category,0);
 			//Add the user information to the table "users"
 			dbw.addUser(status.getUser());
 		}

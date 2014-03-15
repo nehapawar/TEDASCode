@@ -26,7 +26,7 @@ public class CrimeDetection {
 		double[] tweetData = null;
 		double[] x = null;
 		boolean result;
-		tweetData = rtf.getAllFeatures(s);//plus tag?
+		tweetData = rtf.getAllFeatures(s);
 		x = new double[tweetData.length + 3];
 		x[tweetData.length-3] = recgps;
 		x[tweetData.length-2] = rectext;
@@ -34,7 +34,7 @@ public class CrimeDetection {
 		for(int i = 0; i < tweetData.length; i++)
 			x[i] = tweetData[i];
 		
-		//Classify the tweet using features and fewture names
+		//Classify the tweet using features and feature names
 		try {
 			result = tc.isCrime(x, rtf.getFeatureNames());
 			return result;

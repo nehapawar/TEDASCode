@@ -1,14 +1,9 @@
 import edu.stanford.nlp.ie.crf.*;
 import edu.stanford.nlp.ie.AbstractSequenceClassifier;
-import edu.stanford.nlp.io.IOUtils;
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.CoreAnnotations.AnswerAnnotation;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,8 +11,6 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.TermVector;
 /**********************************************************************
 * The TweetNER class classifies tweets and detecting locations with 
 * Stanford NER library and adresses with regular expression
@@ -131,8 +124,10 @@ public class TweetNER {
 		
 		
 	}
-    /* Return string annotated with Organization,People,Location.
-     * See commented out example(bottom) for annotating a file at once instead*/
+    /*************************************************************************
+     *  Return string annotated with Organization,People,Location.
+     * See commented out example(bottom) for annotating a file at once instead
+     * ************************************************************************/
     public String annotate(String tweet) throws IOException {
         //return classifier.classifyToString(tweet)					//this tags all words
         return classifier.classifyWithInlineXML(tweet);             //this is for inline xml
@@ -150,7 +145,10 @@ public class TweetNER {
     	}
     	return ret;
     }
-    /* Return the address got from the regular expression*/
+    
+    /***************************************************************************
+     *  Return the address got from the regular expression
+     *  **************************************************************************/
     public String getAddress(String tweet){
     	addrmatch = address.matcher(tweet);
     	if(addrmatch.lookingAt())
@@ -158,44 +156,3 @@ public class TweetNER {
     	else return null;
     }
 }
-
-//      String serializedClassifier = "classifiers/all.3class.distsim.crf.ser.gz";
-//
-//      if (args.length > 0) {
-//        serializedClassifier = args[0];
-//      }
-//
-//      AbstractSequenceClassifier classifier = CRFClassifier.getClassifierNoExceptions(serializedClassifier);
-//
-//      /* For either a file to annotate or for the hardcoded text example,
-//         this demo file shows two ways to process the output, for teaching
-//         purposes.  For the file, it shows both how to run NER on a String
-//         and how to run it on a whole file.  For the hard-coded String,
-//         it shows how to run it on a single sentence, and how to do this
-//         and produce an inline XML output format.
-//      */
-//      if (args.length > 1) {
-//        String fileContents = IOUtils.slurpFile(args[1]);
-//        List<List<CoreLabel>> out = classifier.classify(fileContents);
-//        for (List<CoreLabel> sentence : out) {
-//          for (CoreLabel word : sentence) {
-//            System.out.print(word.word() + '/' + word.get(AnswerAnnotation.class) + ' ');
-//          }
-//          System.out.println();
-//        }
-//        out = classifier.classifyFile(args[1]);
-//        for (List<CoreLabel> sentence : out) {
-//          for (CoreLabel word : sentence) {
-//            System.out.print(word.word() + '/' + word.get(AnswerAnnotation.class) + ' ');
-//          }
-//          System.out.println();
-//        }
-//
-//      } else {
-//        String s1 = "Good afternoon Rajat Raina, how are you today?";
-//        String s2 = "I go to school at Stanford University, which is located in California.";
-//        System.out.println(classifier.classifyToString(s1));
-//        System.out.println(classifier.classifyWithInlineXML(s2));
-//        System.out.println(classifier.classifyToString(s2, "xml", true));
-//      }
-//    }

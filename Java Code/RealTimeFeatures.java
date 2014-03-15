@@ -21,12 +21,9 @@ import twitter4j.Status;
 import twitter4j.URLEntity;
 import twitter4j.User;
 
-/**
+/***********************************************************************************
  * Provides functionality for generating feature vectors for real time classification
- * @author ravi
- *
- *AKA The leftovers from gutting indexlines
- */
+ **********************************************************************************/
 public class RealTimeFeatures {
 
 	private ArrayList<String> featureNames = new ArrayList<String>();
@@ -44,11 +41,14 @@ public class RealTimeFeatures {
 	
 	//Load the feature file, add the numberwords to the set
 	//set the policeIDs hashtable
-	public RealTimeFeatures(String featureFileName){
-		try {
+	public RealTimeFeatures(String featureFileName)
+	{
+		try 
+		{
 			loadFeatureFile(featureFileName);
 			policeIDs = storePolice(pdfile);
-		} catch (IOException e) {
+		} 
+		catch (IOException e) {
 			e.printStackTrace();
 		}
 		addWordsToSet();
@@ -71,13 +71,15 @@ public class RealTimeFeatures {
 		socialFeatureNames.add("verified");
 	}
 	
-	public boolean isPolice(long uid) {
-		return policeIDs.contains(uid);
-	}
-	
-	// store police departments sites in a hashtable
+	/********************************************************************
+	 *  store police departments sites in a hashtable
+	 * @param pdFile
+	 * @return
+	 * @throws IOException
+	 ******************************************************************/
 	private static Hashtable<String, String> storePolice(String pdFile)
-			throws IOException {
+			throws IOException 
+	{
 		Hashtable<String, String> pdsites = new Hashtable<String, String>();
 		BufferedReader pd = new BufferedReader(new FileReader(pdFile));
 		String polInfo;
@@ -88,6 +90,9 @@ public class RealTimeFeatures {
 		return pdsites;
 	}
 	
+	/*********************************************************
+	 * Create set of numbers spelled as words
+	 ********************************************************/
 	private void addWordsToSet() {
 		int i;
 		for(i = 0; i < numberWordsArray.length; i++) {
@@ -95,45 +100,14 @@ public class RealTimeFeatures {
 		}
 	}
 	
-	public int extractNumbers(String line) {
-		int frequency = 0;
-		char last = line.charAt(line.length()-1); 
-		char slast = line.charAt(line.length()-2);
-		char tlast = line.charAt(line.length()-3);
-		char flast = line.charAt(line.length()-4);
-		if ((slast == ' ' || slast == '\t') && (flast == ' ' || flast == '\t')) {
-			if (last == '0' || last == '1' || last == '2') {
-				frequency--;
-			}
-			if (tlast == '0' || tlast == '1' || tlast == '2') {
-				frequency--;
-			}
-		}
-		line = line.replaceAll("http://[^\\s]*", " ");
-		Pattern numPattern = Pattern.compile("[0-9]+");
-		Matcher numMatcher = numPattern.matcher(line);
-		//int number;
-		while (numMatcher.find()) {
-			//System.out.println(numMatcher.group());
-			frequency++; 
-		}
-		line = line.toLowerCase();
-		line = line.replaceAll("[^a-z\\s]", " ");
-		StringTokenizer st = new StringTokenizer(line);
-		String num = "";
-		boolean flag = false;
-		while (st.hasMoreTokens()) {
-			num = st.nextToken();
-			while ((num.equals("and") || numberWords.contains(num)) && st.hasMoreTokens()) {
-				if (!(num.equals("and"))) { flag = true; }
-				num = st.nextToken();
-			}
-			if (flag) {frequency++; flag = false;}
-		}
-
-		return frequency;
-	}
 	
+	/******************************************************************
+	 * 
+	 * Reads the features file and extracts the feature names and 
+	 * the feature sets into ArrayLists
+	 * @param fn
+	 * @throws IOException
+	 **************************************************************/
 	private void loadFeatureFile(String fn) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(fn));
 		String line;
@@ -154,44 +128,32 @@ public class RealTimeFeatures {
 		br.close();
 	}
 	
-	/*nonsocial features except police id*/
+	/************************************************************
+	 * Get feature counts from tweets
+	 * @param line
+	 * @return
+	 *************************************************************/
 	public double[] convertTweetToFeatures(String line) {
 		double frequency[] = new double[featureSets.size()];
 		int j, k;
 		line = line.toLowerCase();
-		for (j = 0; j < featureSets.size(); j++) {
-			for (k = 0; k < featureSets.get(j).size(); k++) {
-				frequency[j] += StringUtils.countMatches(line, (featureSets
-						.get(j)).get(k));
+		for (j = 0; j < featureSets.size(); j++) 
+		{
+			for (k = 0; k < featureSets.get(j).size(); k++) 
+			{
+				frequency[j] += StringUtils.countMatches(line, (featureSets.get(j)).get(k));
 			}
 		}
 
-		// for(j = 0; j < frequency.length; j++)
-		// System.out.print(frequency[j] + " ");
 		return frequency;
 	}
+
 	
-	/*every feature for nonsocial*/
-	public double[] getFeaturesNonSocial(String tweetContent, long uid) {
-		String userID = uid + "";
-		double[] freq = new double[featureNames.size() + 1];
-		double[] temp = convertTweetToFeatures(tweetContent);
-		for (int i = 0; i < temp.length; i++)
-			freq[i] = temp[i];
-		freq[freq.length - 1] = (policeIDs.contains(userID)) ? 1 : 0;
-		return freq;
-	}
-	
-	/*Everthing for nonsocial including police plus tag*/
-	public double[] getFeaturesNonSocialPlusTag(String tweetContent, long uid){
-		double[] f = getFeaturesNonSocial(tweetContent,uid);
-		double[] ret = new double[f.length + 1];
-		for(int i = 0; i < f.length; i++)
-			ret[i] = f[i];
-		ret[ret.length-1] = -1;
-		return ret;
-	}
-	
+	/**********************************************************************
+	 * Returns the social features of the tweet
+	 * @param s
+	 * @return
+	 ***********************************************************************/
 	public double[] getSocialFeatures(Status s){
 		User u = s.getUser();
 		double[] freq = new double[socialFeatureNames.size()];
@@ -212,14 +174,22 @@ public class RealTimeFeatures {
 	}
 	
 	
-	/*
-	 * Does not include recent gps/text features!
-	 */
-	public double[] getAllFeatures(Status s){
+	/********************************************************************
+	 * Extract all features of the tweet for classification
+	 * @param s
+	 * @return
+	 ********************************************************************/
+	public double[] getAllFeatures(Status s)
+	{
 		//2 is for police and class
 		double[] freq = new double[socialFeatureNames.size() + featureNames.size() + 1];
+		
+		//Get social features of tweet
 		double[] sfreq = getSocialFeatures(s);
+		
+		//Get feature counts of words of tweet
 		double[] tfreq = convertTweetToFeatures(s.getText());
+		
 		for(int i = 0; i < sfreq.length; i++)
 			freq[i] = sfreq[i];
 		for(int i = sfreq.length; i < freq.length-2; i++)
@@ -228,14 +198,6 @@ public class RealTimeFeatures {
 		return freq;
 	}
 	
-	public double[] getAllFeaturesPlusTag(Status s){
-		double[] f = getAllFeatures(s);
-		double[] ret = new double[f.length + 1];
-		for(int i = 0; i < f.length; i++)
-			ret[i] = f[i];
-		ret[ret.length-1] = -1;
-		return ret;
-	}
 	
 	public ArrayList<String> getFeatureNames() {
 		ArrayList<String> ret = new ArrayList<String>();
@@ -249,11 +211,5 @@ public class RealTimeFeatures {
 		ret.add("class");
 		return ret;
 	}
-	
-	public ArrayList<String> getFeatureNamesNonSocial(){
-		ArrayList<String> fns = new ArrayList<String>(featureNames);
-		fns.add("from_police_dept");
-		fns.add("class");
-		return fns;
-	}
+
 }

@@ -86,37 +86,41 @@ public class TweetsClassifier {
 	}
 
 	// NEED TO TEST THIS METHOD
-	private Instances createInstance(double[] tweetData,
-			ArrayList<String> featureNames) {
+	private Instances createInstance(double[] tweetData,ArrayList<String> featureNames) 
+	{
 		FastVector fv = createdFastVector(featureNames);
 		Instances data = new Instances("isCrime", fv, 0);
 		data.setClassIndex(data.numAttributes() - 1);
 		data.add(new Instance(1.0, tweetData));		
-		//System.out.println(data);
 		return data;
 	}
 
-	// Created for read-time classifying
+	// Created for real-time classifying
 	public boolean isCrime(double[] tweetData, ArrayList<String> featureNames)
-			throws Exception {
+			throws Exception 
+	{
 		Instances i = createInstance(tweetData, featureNames);
-		if (cls != null) {
-			// System.out.println("VAL: " +
+		if (cls != null) 
+		{
 			negProb = cls.distributionForInstance(i.firstInstance())[0];
-			//negProb = cls.distributionForInstance(i.firstInstance())[1];
-			if(isSMO){
-				if (negProb <= 0.4) {
+			
+			if(isSMO)
+			{
+				if (negProb <= 0.4) 
 					return true;
-				} else
+				else
 					return false;
 			}
-			if (cls.classifyInstance(i.firstInstance()) == 1.0 || negProb <= 0.4) {
+			if (cls.classifyInstance(i.firstInstance()) == 1.0 || negProb <= 0.4) 
 				return true;
-			} else
+			else
 				return false;
-		} else {
+		} 
+		else 
+		{
 			int vote = 0;
-			for (Classifier c : clss) {
+			for (Classifier c : clss) 
+			{
 				if (c.classifyInstance(i.instance(0)) == 1.0)
 					vote++;
 			}

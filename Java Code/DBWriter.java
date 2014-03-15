@@ -23,12 +23,18 @@ import twitter4j.Status;
 import twitter4j.URLEntity;
 import twitter4j.User;
 
+/*******************************************************************************
+ * Class to fill database with tweet details
+ *
+ ******************************************************************************/
 public class DBWriter {
+	//Database credentials
 	private static String user = "root";
 	private static String pw = "root";
 	private static String dbUrl = "jdbc:mysql://localhost/tedas";
 	private static String dbClass = "com.mysql.jdbc.Driver";
 		
+	//Database queries
 	private static String userdbInsert = "replace into users (userid,screenname,accountAge,favorites,followers,friends,verified,statusCount,lat,lon,profilepic) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 	private static String tweetdbInsert = "replace into tweets (userid,text,created,retweetcount, urls, hashtags, lat, lon, category, tweetid,multipleLocations) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 	private static String insertwithrank = "replace into ranking (tweetid,rtcount,urlpresent,numtags,categorynumber,actage,favs,frnds,verified,statuscount,followers,ranking,confidence) values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -51,10 +57,18 @@ public class DBWriter {
 			e.printStackTrace();
 		}
 		maxes = new double[11];
+		
+		//Obtain maxes from tweets already present 
+		//This will be used to create attribute vector of tweet
 		updateMaxes();
+		
+		//Fill HashMap of cities and their gps coordinates from pre defined citypop.txt
 		cities = new HashMap<String,double[]>();
 		fillCities("config/citypop.txt");
+		//Fill HashSet of states from pre defined states.txt
 		fillStates("config/states.txt");
+		
+		//Fill Hashmap of crime categories
 		catmap = new HashMap<String,Double>();
 		catmap.put("Major Crime", 0.0);
 		catmap.put("Natural Disaster",1.0);
@@ -67,25 +81,9 @@ public class DBWriter {
 		catmap.put("Other Crime Reports",8.0);
 	}
 	
-	public void fillStates(String statefile){
-		this.states = new HashSet<String>();
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(statefile));
-			String line;
-			br.readLine();
-			while((line = br.readLine()) != null)
-			{
-				line = line.toLowerCase();
-				line = line.replaceAll("\\s","");
-				states.add(line);
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
+	/*****************************************************************
+	 * Before starting the new streaming, update the maxes array
+	 ******************************************************************/
 	public void updateMaxes()
 	{
 		try{
@@ -132,6 +130,35 @@ public class DBWriter {
 			e.printStackTrace();
 		}
 	}
+	
+	/************************************************************************
+	 * Method to fill HashSet of states from predefined states.txt file
+	 * @param statefile
+	 *************************************************************************/
+	public void fillStates(String statefile){
+		this.states = new HashSet<String>();
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(statefile));
+			String line;
+			br.readLine();
+			while((line = br.readLine()) != null)
+			{
+				line = line.toLowerCase();
+				line = line.replaceAll("\\s","");
+				states.add(line);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**********************************************************************
+	 * Method to fill HashMap of cities and gps coordinates
+	 * from pre defined citypop.txt file
+	 * @param cityfile
+	 *********************************************************************/
 	public void fillCities(String cityfile)
 	{
 		try {
@@ -155,8 +182,16 @@ public class DBWriter {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
+	
+	/**************************************************************************
+	 * Method to return gps coordinates of the location, by matching with 
+	 * the cities hashmap and states hashset
+	 * 
+	 * @param loc
+	 * @param filter
+	 * @return
+	 **************************************************************************/
 	public double[] getGPS(String loc, boolean filter) {
 		ArrayList<double[]> matches = new ArrayList<double[]>();
 		double[] a = {Double.MAX_VALUE,Double.MAX_VALUE,0.0};
@@ -186,6 +221,8 @@ public class DBWriter {
 			if(states.contains(loc) && filter){
 				return a;
 			}
+			
+			//For every citi that matches, collect the gps coordinates
 			for (String key : cities.keySet()){
 				if(StringUtils.contains(key.toLowerCase(), loc))
 				{
@@ -200,6 +237,8 @@ public class DBWriter {
 				}
 			}
 		}
+		
+		//Return the city out of all the matches which has highest population
 		if (count > 0)
 			a[2] += 100.0;
 		double maxpop = 0.0;
@@ -213,6 +252,12 @@ public class DBWriter {
 		}
 		return a;
 	}	
+	
+	/**********************************************************************
+	 * Method to create a single string from URLs in the tweet
+	 * @param urls
+	 * @return
+	 **********************************************************************/
 	public String handleURL(URLEntity[] urls){
 		String urlStr = "";
 		if (urls != null) {			
@@ -223,6 +268,11 @@ public class DBWriter {
 		return urlStr;
 	}
 
+	/*************************************************************************
+	 * Method to create single string from hashtags in the tweet
+	 * @param htes
+	 * @return
+	 ***********************************************************************/
 	public String handleHashTags(HashtagEntity[] htes)
 	{
 		String hts="";
@@ -233,23 +283,35 @@ public class DBWriter {
 		return hts;
 	}
 
+	/*************************************************************************
+	 * Method to add tweet into database table "tweets" and "rankings"
+	 * @param s - Status
+	 * @param NERloc - Location extracted by Stanford NER from the tweet
+	 * @param regLoc - Location matched by the regular expression
+	 * @param category - Category of tweet decided by Tweet NER, 
+	 * 				     according to pre decided categories
+	 * @param confidence - Confidence of classification returned by classifier
+	 **************************************************************************/
 	public void addTweet(Status s, String NERloc, String regLoc, String category, double confidence)
 	{
-		//url string
+		//Extract URL entities from the tweet
 		URLEntity[] urls = s.getURLEntities();
 		String urlStr = handleURL(urls);
-		//hashtag string
+		
+		//Extract hash tags from tweet
 		HashtagEntity[] htes=s.getHashtagEntities();
 		String hts = handleHashTags(htes);
 
 		int mulloc = 0;
 		double lat=Double.MAX_VALUE,lon=Double.MAX_VALUE;
 		Place p;
+		//If geo location is not null, get tweet coordinates from that
 		if(s.getGeoLocation() != null)
 		{
 			lat = s.getGeoLocation().getLatitude();
 			lon = s.getGeoLocation().getLongitude();
 		}
+		//Else get tweet coordinates from Place
 		else if((p = s.getPlace()) != null)
 		{
 			if (p.getBoundingBoxCoordinates()!=null) 
@@ -277,6 +339,7 @@ public class DBWriter {
 	                lon = lon /4;
 	        }
 		}
+		//Else get coordinates from the location extracted by NER
 		else if(NERloc != null)
 		{
 			double[] loc = getGPS(NERloc,true);
@@ -287,6 +350,7 @@ public class DBWriter {
 				mulloc = 1;
 			
 		}
+		//Else get tweet coordinates from the address matched by regular expression
 		else if(regLoc != null)
 		{
 			double [] loc = getGPS(regLoc,true);
@@ -409,13 +473,7 @@ public class DBWriter {
 		}
 	}
 
-	public double log(double a){
-		if (a <= 0.0){
-			return a;
-		}
-		else
-			return Math.log(a);
-	}
+
 	
 }
 	
